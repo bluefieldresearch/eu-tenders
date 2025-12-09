@@ -1,0 +1,7 @@
+exports/
+resources/
+dump/
+venv/
+*.csv
+*.env
+*.xlsx
