@@ -6,23 +6,23 @@ Available in both PostgreSQL (Docker, `localhost:5433`, database `tenders`) and 
 
 ## Table Overview
 
-| Table | Description | Records |
-|-------|-------------|---------|
-| `contracts` | Unified tender/lot records from all sources | ~2.77M |
-| `contracts_tags` | Flexible tagging layer for contract classification | ~97K |
-| `companies` | Company names as they appear in the `awardee` field | ~22K |
-| `companies_groups` | Parent organizations / holding companies | 200 |
-| `companies_groups_memberships` | Links companies to groups with ownership percentages | ~11K |
-| `ref_contract_nature` | EU contract nature codes | 3 |
-| `ref_procedure_type` | EU procurement procedure types | 13 |
-| `ref_authority_type` | EU buyer/authority legal types | 18 |
-| `ref_notice_type` | EU notice types | 20 |
-| `ref_status` | Contract lifecycle status codes | 9 |
-| `ref_country` | ISO 3166-1 alpha-2 country codes | 26 |
-| `ref_currency` | ISO 4217 currency codes | 12 |
-| `ref_source` | Data source platforms | 3 |
-| `ref_cpv_codes` | Common Procurement Vocabulary (EU standard) | 9,454 |
-| `ref_tags` | Tag definitions for contract classification | 4 |
+| Table | Description |
+|-------|-------------|
+| `contracts` | Unified tender/lot records from all sources |
+| `contracts_tags` | Flexible tagging layer for contract classification |
+| `companies` | Company names as they appear in the `awardee` field |
+| `companies_groups` | Parent organizations / holding companies |
+| `companies_groups_memberships` | Links companies to groups with ownership percentages |
+| `ref_contract_nature` | EU contract nature codes |
+| `ref_procedure_type` | EU procurement procedure types |
+| `ref_authority_type` | EU buyer/authority legal types |
+| `ref_notice_type` | EU notice types |
+| `ref_status` | Contract lifecycle status codes |
+| `ref_country` | ISO 3166-1 alpha-2 country codes |
+| `ref_currency` | ISO 4217 currency codes |
+| `ref_source` | Data source platforms |
+| `ref_cpv_codes` | Common Procurement Vocabulary (EU standard) |
+| `ref_tags` | Tag definitions for contract classification |
 
 ---
 

@@ -1,0 +1,10 @@
+[project]
+name = "eu-tenders"
+version = "0.1.0"
+description = "EU public procurement data pipeline and analysis"
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "psycopg2-binary",
+    "google-cloud-bigquery",
+]

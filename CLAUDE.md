@@ -35,21 +35,23 @@ bq query --use_legacy_sql=false "SELECT COUNT(*) FROM EU_Spanish_Tender_Dataset.
 ```
 ├── CLAUDE.md              # This file
 ├── SCHEMA.md              # Full database schema documentation
+├── pyproject.toml         # Python project metadata and dependencies
 ├── compose.yml            # PostgreSQL container
 ├── .gitignore
-└── schema/
-    ├── postgres.sql       # PostgreSQL DDL (tables, indexes, reference data)
-    └── bigquery.sql       # BigQuery DDL
+├── schema/
+│   ├── postgres.sql       # PostgreSQL DDL (tables, indexes, reference data)
+│   └── bigquery.sql       # BigQuery DDL
+└── source/
+    ├── place.py           # Incremental sync from PLACE (ATOM/CODICE XML)
+    └── gencat.py          # Incremental sync from GENCAT (Socrata API)
 ```
 
 ## Data Sources
 
-| Source | Code | Records | Coverage |
-|--------|------|---------|----------|
-| Plataforma de Contratacion del Estado | `PLACE` | ~1.4M | All of Spain (except Catalunya-only tenders) |
-| Plataforma de Contractacio Publica de Catalunya | `GENCAT` | ~1.4M | Catalunya |
-
-Total: **~2.77M** contracts in the unified `contracts` table.
+| Source | Code | Coverage |
+|--------|------|----------|
+| Plataforma de Contratacion del Estado | `PLACE` | All of Spain (except Catalunya-only tenders) |
+| Plataforma de Contractacio Publica de Catalunya | `GENCAT` | Catalunya |
 
 ## Data Model Summary
 
