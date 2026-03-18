@@ -7,4 +7,7 @@ dependencies = [
     "requests",
     "psycopg2-binary",
     "google-cloud-bigquery",
+    "pandas",
+    "pyarrow",
+    "openpyxl",
 ]

@@ -44,11 +44,13 @@ bq query --use_legacy_sql=false "SELECT COUNT(*) FROM EU_Spanish_Tender_Dataset.
 ├── source/
 │   ├── es_place.py        # Incremental sync from ES_PLACE (ATOM/CODICE XML)
 │   ├── es_gencat.py       # Incremental sync from ES_GENCAT (Socrata API)
-│   └── fr_decp.py         # Sync from FR_DECP (Parquet from data.gouv.fr)
+│   ├── fr_decp.py         # Sync from FR_DECP (Parquet from data.gouv.fr)
+│   └── pt_base.py         # Sync from PT_BASE (XLSX from dados.gov.pt)
 └── docs/
     ├── es_place.md        # ES_PLACE source documentation and field mapping
     ├── es_gencat.md       # ES_GENCAT source documentation and field mapping
-    └── fr_decp.md         # FR_DECP source documentation and field mapping
+    ├── fr_decp.md         # FR_DECP source documentation and field mapping
+    └── pt_base.md         # PT_BASE source documentation and field mapping
 ```
 
 ## Data Sources
@@ -58,6 +60,7 @@ bq query --use_legacy_sql=false "SELECT COUNT(*) FROM EU_Spanish_Tender_Dataset.
 | Plataforma de Contratacion del Estado | `ES_PLACE` | All of Spain (except Catalunya-only tenders) |
 | Plataforma de Contractacio Publica de Catalunya | `ES_GENCAT` | Catalunya |
 | Donnees Essentielles de la Commande Publique | `FR_DECP` | France (awarded contracts only) |
+| Portal BASE - Contratos Publicos | `PT_BASE` | Portugal (awarded contracts, 2012+) |
 
 See `docs/` for detailed documentation on each source, including field mappings and data access methods.
 

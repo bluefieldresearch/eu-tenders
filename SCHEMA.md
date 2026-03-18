@@ -81,6 +81,7 @@ See `docs/` for detailed field mappings per source:
 - [ES_PLACE](docs/es_place.md) — Spanish national platform (ATOM/CODICE XML)
 - [ES_GENCAT](docs/es_gencat.md) — Catalan regional platform (Socrata API)
 - [FR_DECP](docs/fr_decp.md) — French consolidated procurement data (Parquet)
+- [PT_BASE](docs/pt_base.md) — Portuguese national platform (XLSX from dados.gov.pt)
 
 ### Deduplication
 
@@ -288,6 +289,7 @@ ISO 4217 codes. Includes EUR, SEK, DKK, PLN, CZK, HUF, RON, BGN, HRK, GBP, NOK, 
 | `ES_PLACE` | Plataforma de Contratacion del Estado | https://contrataciondelestado.es | ES |
 | `ES_GENCAT` | Plataforma de Contractacio Publica de Catalunya | https://contractaciopublica.cat | ES |
 | `FR_DECP` | Donnees Essentielles de la Commande Publique | https://data.gouv.fr | FR |
+| `PT_BASE` | Portal BASE - Contratos Publicos | https://www.base.gov.pt | PT |
 
 ### ref_cpv_codes
 
