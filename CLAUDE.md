@@ -39,8 +39,12 @@ bq query --use_legacy_sql=false "SELECT COUNT(*) FROM EU_Spanish_Tender_Dataset.
 ├── compose.yml            # PostgreSQL container
 ├── .gitignore
 ├── schema/
-│   ├── postgres.sql       # PostgreSQL DDL (tables, indexes, reference data)
-│   └── bigquery.sql       # BigQuery DDL
+│   ├── postgres/
+│   │   ├── tenders.sql    # PostgreSQL DDL for tenders layer
+│   │   └── assets.sql     # PostgreSQL DDL for assets/localities layer
+│   └── bigquery/
+│       ├── tenders.sql    # BigQuery DDL for tenders layer
+│       └── assets.sql     # BigQuery DDL for assets/localities layer
 ├── source/
 │   ├── es_place.py        # Incremental sync from ES_PLACE (ATOM/CODICE XML)
 │   ├── es_gencat.py       # Incremental sync from ES_GENCAT (Socrata API)
