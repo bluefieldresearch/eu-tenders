@@ -239,7 +239,7 @@ def transform_record(r):
     cpv_codes = [c.strip() for c in cpv_raw.split('||') if c.strip()] if cpv_raw else None
 
     return {
-        'source': 'GENCAT',
+        'source': 'ES_GENCAT',
         'source_id': f"{codi_exp}/{codi_org}",
         'lot_number': lot,
         'reference_number': codi_exp,

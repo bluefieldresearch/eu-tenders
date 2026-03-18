@@ -1,6 +1,6 @@
 # EU Public Procurement Analysis
 
-This project consolidates public procurement data from multiple EU sources into a unified data model. Currently focused on Spain (PLACE and GENCAT), with the schema designed to expand across EU member states.
+This project consolidates public procurement data from multiple EU sources into a unified data model. Currently includes Spain (ES_PLACE, ES_GENCAT) and France (FR_DECP).
 
 The database schema is fully documented in [SCHEMA.md](SCHEMA.md).
 
@@ -41,17 +41,25 @@ bq query --use_legacy_sql=false "SELECT COUNT(*) FROM EU_Spanish_Tender_Dataset.
 ├── schema/
 │   ├── postgres.sql       # PostgreSQL DDL (tables, indexes, reference data)
 │   └── bigquery.sql       # BigQuery DDL
-└── source/
-    ├── place.py           # Incremental sync from PLACE (ATOM/CODICE XML)
-    └── gencat.py          # Incremental sync from GENCAT (Socrata API)
+├── source/
+│   ├── es_place.py        # Incremental sync from ES_PLACE (ATOM/CODICE XML)
+│   ├── es_gencat.py       # Incremental sync from ES_GENCAT (Socrata API)
+│   └── fr_decp.py         # Sync from FR_DECP (Parquet from data.gouv.fr)
+└── docs/
+    ├── es_place.md        # ES_PLACE source documentation and field mapping
+    ├── es_gencat.md       # ES_GENCAT source documentation and field mapping
+    └── fr_decp.md         # FR_DECP source documentation and field mapping
 ```
 
 ## Data Sources
 
 | Source | Code | Coverage |
 |--------|------|----------|
-| Plataforma de Contratacion del Estado | `PLACE` | All of Spain (except Catalunya-only tenders) |
-| Plataforma de Contractacio Publica de Catalunya | `GENCAT` | Catalunya |
+| Plataforma de Contratacion del Estado | `ES_PLACE` | All of Spain (except Catalunya-only tenders) |
+| Plataforma de Contractacio Publica de Catalunya | `ES_GENCAT` | Catalunya |
+| Donnees Essentielles de la Commande Publique | `FR_DECP` | France (awarded contracts only) |
+
+See `docs/` for detailed documentation on each source, including field mappings and data access methods.
 
 ## Data Model Summary
 
@@ -141,7 +149,7 @@ WHERE code LIKE '904%';
 
 3. **Deduplication**: The `contracts` table stores only the latest state of each tender-lot. When syncing, use `MERGE`/upsert on the `(source, source_id, lot_number)` primary key.
 
-4. **Character encoding**: Some company names from PLACE have corrupted characters. Search with patterns to catch these.
+4. **Character encoding**: Some company names from ES_PLACE have corrupted characters. Search with patterns to catch these.
 
 5. **Espina Obras Hidraulicas** is NOT part of the "Espina y Delfin" group.
 

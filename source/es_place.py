@@ -242,7 +242,7 @@ def parse_entry(entry):
 
     # Base record (shared fields)
     base = {
-        'source': 'PLACE',
+        'source': 'ES_PLACE',
         'source_id': atom_id or folder_id,
         'reference_number': folder_id,
         'source_url': source_url,

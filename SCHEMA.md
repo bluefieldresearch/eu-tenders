@@ -34,10 +34,10 @@ One row per tender-lot combination. Stores the latest state of each record (upse
 
 | Column | Type | Nullable | Default | Description |
 |--------|------|----------|---------|-------------|
-| `source` | VARCHAR(20) | NO | | Data source platform. FK &rarr; `ref_source.code` |
-| `source_id` | VARCHAR(200) | NO | | Platform-native identifier. PLACE: `identificador` (bigint as text). GENCAT: `codi_expedient/codi_organ` |
+| `source` | VARCHAR(20) | NO | | Data source platform code (e.g., `ES_PLACE`, `ES_GENCAT`, `FR_DECP`) |
+| `source_id` | VARCHAR(500) | NO | | Platform-native identifier (format varies by source, see `docs/`) |
 | `lot_number` | VARCHAR(200) | NO | `'0'` | Lot identifier. `'0'` for single-lot tenders |
-| `reference_number` | VARCHAR(200) | YES | | Human-readable reference (n&uacute;mero de expediente) |
+| `reference_number` | VARCHAR(500) | YES | | Human-readable reference number |
 | `source_url` | TEXT | YES | | Link to the original tender on the source platform |
 | `status` | VARCHAR(20) | YES | | Lifecycle status. FK &rarr; `ref_status.code` |
 | `contract_nature` | VARCHAR(20) | YES | | EU contract nature. FK &rarr; `ref_contract_nature.code` |
@@ -47,13 +47,13 @@ One row per tender-lot combination. Stores the latest state of each record (upse
 | `notice_type` | VARCHAR(30) | YES | | Type of notice/publication. FK &rarr; `ref_notice_type.code` |
 | `contract_title` | TEXT | YES | | Contract title / subject (objeto del contrato) |
 | `lot_title` | TEXT | YES | | Lot-specific title, if different from contract title |
-| `contract_duration` | VARCHAR(200) | YES | | Contract duration as free text (from GENCAT) |
+| `contract_duration` | VARCHAR(200) | YES | | Contract duration (format varies by source) |
 | `contracting_authority` | TEXT | YES | | Name of the contracting authority (&oacute;rgano de contrataci&oacute;n) |
-| `authority_id` | VARCHAR(50) | YES | | Identifier of the authority (NIF for PLACE, codi_organ for GENCAT) |
+| `authority_id` | VARCHAR(50) | YES | | Identifier of the contracting authority (NIF, SIRET, etc.) |
 | `authority_type` | VARCHAR(30) | YES | | Type of authority. FK &rarr; `ref_authority_type.code` |
 | `authority_dir3` | VARCHAR(50) | YES | | DIR3 code (Spanish public administration directory) |
 | `place_of_execution` | VARCHAR(500) | YES | | Place of execution / delivery |
-| `nuts_code` | VARCHAR(20) | YES | | NUTS code for location (from GENCAT) |
+| `nuts_code` | VARCHAR(20) | YES | | NUTS code for location (when available) |
 | `country` | VARCHAR(5) | YES | | Country code. FK &rarr; `ref_country.code` |
 | `estimated_value` | DECIMAL(18,2) | YES | | Estimated contract/lot value (excl. tax) |
 | `estimated_value_currency` | VARCHAR(5) | YES | `'EUR'` | FK &rarr; `ref_currency.code` |
@@ -62,46 +62,29 @@ One row per tender-lot combination. Stores the latest state of each record (upse
 | `awardee` | TEXT | YES | | Awarded company name, verbatim from source. Joins to `companies.name` |
 | `awardee_id` | TEXT | YES | | Awardee tax ID (NIF/CIF) when available |
 | `award_value` | DECIMAL(18,2) | YES | | Award amount without taxes |
-| `award_value_with_tax` | DECIMAL(18,2) | YES | | Award amount including tax (from GENCAT) |
+| `award_value_with_tax` | DECIMAL(18,2) | YES | | Award amount including tax (when available) |
 | `award_value_currency` | VARCHAR(5) | YES | `'EUR'` | FK &rarr; `ref_currency.code` |
 | `num_offers` | INTEGER | YES | | Number of offers/bids received |
-| `excluded_low_offers` | BOOLEAN | YES | | Whether abnormally low offers were excluded (PLACE only) |
+| `excluded_low_offers` | BOOLEAN | YES | | Whether abnormally low offers were excluded |
 | `date_published` | TIMESTAMP | YES | | Date the tender was first published |
 | `date_updated` | TIMESTAMP | YES | | Date of the most recent update from the source |
 | `date_awarded` | DATE | YES | | Date the contract was awarded |
 | `date_contract_start` | DATE | YES | | Date the contract entered into force |
-| `eu_funded` | BOOLEAN | YES | | Whether the project has EU funding (from GENCAT) |
-| `is_aggregated` | BOOLEAN | YES | | Whether this is part of an aggregated minor contracts publication (GENCAT) |
+| `eu_funded` | BOOLEAN | YES | | Whether the project has EU funding |
+| `is_aggregated` | BOOLEAN | YES | | Whether this is part of an aggregated minor contracts publication |
 | `cpv_codes` | TEXT[] | YES | | Array of CPV codes. FK &rarr; `ref_cpv_codes.code` |
 | `last_synced_at` | TIMESTAMP | YES | `now()` | When this record was last synced from the source |
 
-### Source-specific mapping
+### Source-specific field mappings
 
-| Field | PLACE source | GENCAT source |
-|-------|-------------|---------------|
-| `source_id` | `CAST(identificador AS TEXT)` | `codi_expedient \|\| '/' \|\| codi_organ` |
-| `lot_number` | `resultados.lote` | `numero_lot` |
-| `reference_number` | `numero_expediente` | `codi_expedient` |
-| `source_url` | `link_licitacion` | `enllac_publicacio` |
-| `contract_title` | `objeto_contrato` | `objecte_contracte` |
-| `lot_title` | `resultados.objeto_lote` | `denominacio` |
-| `contracting_authority` | `organo_contratacion` | `nom_organ` |
-| `authority_id` | `nif_oc` | `codi_organ` |
-| `estimated_value` | `resultados.valor_estimado_lote` | `valor_estimat_contracte` |
-| `base_budget` | `resultados.presupuesto_base_sin_impuestos_lote` | `pressupost_base_licitacio` |
-| `awardee` | `resultados.adjudicatario` | `denominacio_adjudicatari` |
-| `award_value` | `resultados.importe_adjudicacion_sin_impuestos` | `import_adjudicacio_sense` |
-| `procedure_type` | not available | mapped from `procediment` |
-| `nuts_code` | not available | `codi_nuts` |
-| `contract_duration` | not available | `durada_contracte` |
-| `eu_funded` | not available | `finançament_europeu` |
+See `docs/` for detailed field mappings per source:
+- [ES_PLACE](docs/es_place.md) — Spanish national platform (ATOM/CODICE XML)
+- [ES_GENCAT](docs/es_gencat.md) — Catalan regional platform (Socrata API)
+- [FR_DECP](docs/fr_decp.md) — French consolidated procurement data (Parquet)
 
 ### Deduplication
 
-When multiple records exist for the same `(source, source_id, lot_number)`, only the most recent is kept:
-
-- **PLACE:** `ORDER BY fecha_actualizacion DESC` (same tender appears across multiple year files)
-- **GENCAT:** `ORDER BY GREATEST(data_publicacio_*) DESC` (same tender updated through lifecycle)
+When multiple records exist for the same `(source, source_id, lot_number)`, the upsert (`ON CONFLICT DO UPDATE`) ensures only the latest version is kept.
 
 ---
 
@@ -198,34 +181,7 @@ EU standard contract nature ([eForms contract-nature](https://github.com/OP-TED/
 | `services` | Services |
 | `supplies` | Supplies |
 
-#### Mapping from source values
-
-| Source value (PLACE) | `contract_nature` | `is_concession` |
-|---------------------|-------------------|-----------------|
-| Obras | `works` | `false` |
-| Servicios | `services` | `false` |
-| Suministros | `supplies` | `false` |
-| Concesion de Servicios | `services` | `true` |
-| Concesion de Obras | `works` | `true` |
-| Concesion de Obras Publicas | `works` | `true` |
-| Gestion de Servicios Publicos | `services` | `true` |
-| Colaboracion entre el sector publico y sector privado | `services` | `false` |
-| Administrativo especial | `services` | `false` |
-| Privado | `services` | `false` |
-| Patrimonial | `NULL` | `false` |
-
-| Source value (GENCAT) | `contract_nature` | `is_concession` |
-|----------------------|-------------------|-----------------|
-| Obres | `works` | `false` |
-| Serveis | `services` | `false` |
-| Subministraments | `supplies` | `false` |
-| Concessio de serveis | `services` | `true` |
-| Concessio d'obres | `works` | `true` |
-| Concessio de serveis especials (annex IV) | `services` | `true` |
-| Contracte de serveis especials (annex IV) | `services` | `false` |
-| Administratiu especial | `services` | `false` |
-| Privat d'Administracio Publica | `services` | `false` |
-| Altra legislacio sectorial | `services` | `false` |
+Concessions are **not** a separate nature — they are flagged via `contracts.is_concession`. Source-specific type mappings are documented in `docs/`.
 
 ### ref_procedure_type
 
@@ -303,17 +259,19 @@ Notice/publication types. Based on [eForms notice-type](https://github.com/OP-TE
 
 Contract lifecycle status codes (custom taxonomy).
 
-| Code | Label | PLACE mapping | GENCAT mapping |
-|------|-------|--------------|----------------|
-| `announced` | Announced | `VIGENTE` (no result) | `Anunci de licitacio` |
-| `evaluation` | Under evaluation | — | `Expedient en avaluacio` |
-| `awarded` | Awarded | `VIGENTE` (with result, no fecha_entrada_vigor) | `Adjudicacio` |
-| `formalized` | Formalized | `VIGENTE` (with result + fecha_entrada_vigor) | `Formalitzacio`, aggregated contracts |
-| `cancelled` | Cancelled | `ANULADA` | `Anul·lacio`, `Desisitment`, `Renuncia` |
-| `deserted` | Deserted | — | `Desert` |
-| `archived` | Archived | — | — |
-| `modified` | Modified | — | — |
-| `prior-notice` | Prior information notice | — | `Anunci previ`, `Alerta futura`, `Consulta preliminar del mercat` |
+| Code | Label |
+|------|-------|
+| `announced` | Announced |
+| `evaluation` | Under evaluation |
+| `awarded` | Awarded |
+| `formalized` | Formalized |
+| `cancelled` | Cancelled |
+| `deserted` | Deserted |
+| `archived` | Archived |
+| `modified` | Modified |
+| `prior-notice` | Prior information notice |
+
+Source-specific status mappings are documented in `docs/`.
 
 ### ref_country
 
@@ -327,9 +285,9 @@ ISO 4217 codes. Includes EUR, SEK, DKK, PLN, CZK, HUF, RON, BGN, HRK, GBP, NOK, 
 
 | Code | Label | URL | Country |
 |------|-------|-----|---------|
-| `PLACE` | Plataforma de Contratacion del Estado | https://contrataciondelestado.es | ES |
-| `GENCAT` | Plataforma de Contractacio Publica de Catalunya | https://contractaciopublica.cat | ES |
-| `TED` | Tenders Electronic Daily | https://ted.europa.eu | — |
+| `ES_PLACE` | Plataforma de Contratacion del Estado | https://contrataciondelestado.es | ES |
+| `ES_GENCAT` | Plataforma de Contractacio Publica de Catalunya | https://contractaciopublica.cat | ES |
+| `FR_DECP` | Donnees Essentielles de la Commande Publique | https://data.gouv.fr | FR |
 
 ### ref_cpv_codes
 
