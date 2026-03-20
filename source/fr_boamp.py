@@ -376,9 +376,16 @@ def get_count(date_from, date_to):
         'where': f"dateparution>='{date_from}' AND dateparution<='{date_to}' AND {IMPORT_NATURES}",
         'limit': 0,
     }
-    resp = requests.get(API_URL, params=params)
-    resp.raise_for_status()
-    return resp.json()['total_count']
+    for attempt in range(5):
+        resp = requests.get(API_URL, params=params)
+        if resp.status_code == 429:
+            wait = 30 * (attempt + 1)
+            print(f"\n  Rate limited on count query, waiting {wait}s...", flush=True)
+            time.sleep(wait)
+            continue
+        resp.raise_for_status()
+        return resp.json()['total_count']
+    resp.raise_for_status()  # Will raise on last attempt
 
 
 def fetch_batch(date_from, date_to, offset, limit=BATCH_SIZE):
