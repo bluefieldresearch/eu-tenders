@@ -36,6 +36,8 @@ CREATE TABLE IF NOT EXISTS localities (
     nuts_code VARCHAR(20),
     municipality_code VARCHAR(20),
     population INTEGER,
+    latitude DECIMAL(10, 7),
+    longitude DECIMAL(10, 7),
     UNIQUE(name, country, municipality_code)
 );
 
@@ -50,14 +52,17 @@ CREATE INDEX IF NOT EXISTS idx_localities_name ON localities(name);
 
 CREATE TABLE IF NOT EXISTS assets (
     id SERIAL PRIMARY KEY,
-    locality_id INTEGER NOT NULL REFERENCES localities(id),
+    locality_id INTEGER REFERENCES localities(id),
     asset_type VARCHAR(50) NOT NULL REFERENCES ref_asset_types(code),
     name VARCHAR(500),
-    capacity VARCHAR(200),
-    year_built INTEGER,
+    owner VARCHAR(500),
+    owner_link TEXT,
+    ca VARCHAR(500),
+    ca_link TEXT,
     latitude DECIMAL(10, 7),
     longitude DECIMAL(10, 7),
-    notes TEXT
+    notes TEXT,
+    metadata JSONB
 );
 
 CREATE INDEX IF NOT EXISTS idx_assets_locality ON assets(locality_id);
@@ -73,10 +78,41 @@ CREATE TABLE IF NOT EXISTS assets_operators (
     id SERIAL PRIMARY KEY,
     asset_id INTEGER NOT NULL REFERENCES assets(id),
     operator VARCHAR(500),
+    management_type VARCHAR(20),
+    contract_type VARCHAR(100),
     start_date DATE,
     end_date DATE,
+    tender_link TEXT,
     notes TEXT
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_assets_operators_asset ON assets_operators(asset_id);
 CREATE INDEX IF NOT EXISTS idx_assets_operators_asset ON assets_operators(asset_id);
 CREATE INDEX IF NOT EXISTS idx_assets_operators_operator ON assets_operators(operator);
+
+
+-- ============================================================================
+-- Views
+-- ============================================================================
+
+CREATE OR REPLACE VIEW v_water_supply AS
+SELECT
+    l.country,
+    l.name AS municipality,
+    l.municipality_code,
+    l.population,
+    a.asset_type,
+    a.owner,
+    a.ca,
+    ao.operator,
+    ao.management_type,
+    ao.contract_type,
+    ao.start_date,
+    ao.end_date,
+    ao.tender_link,
+    ao.notes,
+    a.metadata
+FROM assets a
+JOIN assets_operators ao ON ao.asset_id = a.id
+LEFT JOIN localities l ON a.locality_id = l.id
+WHERE a.asset_type = 'water_network';

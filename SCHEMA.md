@@ -313,6 +313,68 @@ Tags for contract classification.
 
 ---
 
+## localities
+
+One row per municipality/locality. Used as the geographic anchor for assets.
+
+**Primary key:** `id` (serial). **Unique:** `(name, country, municipality_code)`.
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | SERIAL | NO | Auto-increment ID |
+| `name` | VARCHAR(500) | NO | Locality name |
+| `country` | VARCHAR(5) | NO | Country code. FK &rarr; `ref_country.code` |
+| `nuts_code` | VARCHAR(20) | YES | NUTS code |
+| `municipality_code` | VARCHAR(20) | YES | National municipality code (e.g., INE code for Spain) |
+| `population` | INTEGER | YES | Population |
+| `latitude` | DECIMAL(10,7) | YES | Latitude |
+| `longitude` | DECIMAL(10,7) | YES | Longitude |
+
+---
+
+## assets
+
+Infrastructure assets linked to a locality. Every locality has at least a `water_network` and `sewer_network` asset.
+
+**Primary key:** `id` (serial).
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | SERIAL | NO | Auto-increment ID |
+| `locality_id` | INTEGER | YES | FK &rarr; `localities.id`. NULL for EPCI/syndicat-level assets not yet linked to communes |
+| `asset_type` | VARCHAR(50) | NO | Asset type. FK &rarr; `ref_asset_types.code` (`water_network`, `sewer_network`, `wwtp`, `dwtp`, `desalination`) |
+| `name` | VARCHAR(500) | YES | Asset name (e.g., specific WWTP name) |
+| `owner` | VARCHAR(500) | YES | Asset owner (municipality, consorcio, etc.) |
+| `owner_link` | TEXT | YES | URL to the owner |
+| `ca` | VARCHAR(500) | YES | Contracting authority — entity that procures the service |
+| `ca_link` | TEXT | YES | URL to the contracting authority |
+| `latitude` | DECIMAL(10,7) | YES | Latitude |
+| `longitude` | DECIMAL(10,7) | YES | Longitude |
+| `notes` | TEXT | YES | Free-text notes |
+| `metadata` | JSONB | YES | Unstructured JSON data |
+
+---
+
+## assets_operators
+
+Tracks the current operator of each asset. One operator per asset.
+
+**Primary key:** `id` (serial). **Unique:** `asset_id`.
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | SERIAL | NO | Auto-increment ID |
+| `asset_id` | INTEGER | NO | FK &rarr; `assets.id` |
+| `operator` | VARCHAR(500) | YES | Operator name (company or public entity) |
+| `management_type` | VARCHAR(20) | YES | `public` or `private` |
+| `contract_type` | VARCHAR(100) | YES | Contract/management mode (e.g., `Concesión`, `Administración`, `Sociedad Economía Mixta`, `Convenio de Cooperación Interadministrativa`) |
+| `start_date` | DATE | YES | Contract start date |
+| `end_date` | DATE | YES | Contract end date |
+| `tender_link` | TEXT | YES | URL to the related tender |
+| `notes` | TEXT | YES | Free-text notes |
+
+---
+
 ## Entity-Relationship Diagram
 
 ```

@@ -2,6 +2,8 @@ exports/
 resources/
 dump/
 venv/
+.venv/
+uv.lock
 *.csv
 *.env
 *.xlsx

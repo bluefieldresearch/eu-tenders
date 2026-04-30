@@ -10,4 +10,6 @@ dependencies = [
     "pandas",
     "pyarrow",
     "openpyxl",
+    "xlrd",
+    "python-dateutil",
 ]
