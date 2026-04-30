@@ -35,27 +35,50 @@ AUTHORITY_PATTERNS = [
     r'(?:Pleno|Alcald[ií]a|Junta de Gobierno|Consejo de Administraci[oó]n)\s+del?\s+(?:Ayuntamiento|Concello|Ajuntament)\s+d(?:e\s+|el\s+|\')',
     # "PLENO DEL AYUNTAMIENTO DE X" (uppercase)
     r'PLENO\s+DEL\s+AYUNTAMIENTO\s+DE\s+',
+    # "Ajuntament de X" / "Ajuntament d'X" (Catalan)
+    r'Ajuntament\s+d(?:e\s+|e\s+l[\'a]\s+|\')',
     # "Ayuntamiento de X" standalone
     r'(?:Ayuntamiento|Concello|Ajuntament)\s+d(?:e\s+|el\s+|\')',
 ]
 
-# Detect asset types from contract title
+# Detect asset types from contract title (Spanish + Catalan)
 def detect_asset_types(title):
     """Return list of asset_type codes based on keywords in the title."""
     t = title.lower()
     types = []
-    is_ciclo_integral = 'ciclo integral' in t
-    if is_ciclo_integral or 'abastecimiento' in t or 'agua potable' in t or 'suministro de agua' in t:
+    is_ciclo_integral = 'ciclo integral' in t or 'cicle integral' in t
+    if (is_ciclo_integral or 'abastecimiento' in t or 'agua potable' in t
+            or 'suministro de agua' in t
+            or 'abastament' in t or 'aigua potable' in t):
         types.append('water_network')
-    if is_ciclo_integral or 'alcantarillado' in t or 'saneamiento' in t:
+    if (is_ciclo_integral or 'alcantarillado' in t or 'saneamiento' in t
+            or 'clavegueram' in t or 'sanejament' in t):
         types.append('sewer_network')
     if 'depuraci' in t or 'edar' in t:
         types.append('wwtp')
     return types
 
 
+def parse_duration_months(duration_str):
+    """Parse duration string into months. Handles both numeric (ES_PLACE)
+    and Catalan format '20 anys 0 mesos 0 dies' (ES_GENCAT)."""
+    if not duration_str:
+        return None
+    # Numeric (ES_PLACE): just months
+    try:
+        return int(float(duration_str))
+    except (ValueError, TypeError):
+        pass
+    # Catalan format: "20 anys 0 mesos 0 dies"
+    m = re.match(r'(\d+)\s*anys?\s+(\d+)\s*mes(?:os|es)?', str(duration_str))
+    if m:
+        return int(m.group(1)) * 12 + int(m.group(2))
+    return None
+
+
 def extract_municipality(authority):
     """Try to extract municipality name from contracting authority string."""
+    authority = normalize_apostrophes(authority)
     for pattern in AUTHORITY_PATTERNS:
         m = re.search(pattern, authority, re.IGNORECASE)
         if m:
@@ -83,7 +106,7 @@ def build_locality_lookup(cur):
 
     for row in rows:
         name = row['name']
-        lower_name = name.lower()
+        lower_name = normalize_apostrophes(name.lower())
         exact[lower_name] = row['id']
         no_accents[strip_accents(lower_name)] = row['id']
         contains[lower_name] = row['id']
@@ -91,16 +114,27 @@ def build_locality_lookup(cur):
         # Handle "Name, El/La/Los/Las/L'" -> "El/La/... Name"
         m = re.match(r'^(.+),\s*(el|la|los|las|l\'|es|sa|ses)$', lower_name, re.IGNORECASE)
         if m:
-            flipped = f"{m.group(2)} {m.group(1)}".strip()
+            article = m.group(2)
+            base = m.group(1)
+            # "l'" joins directly without space, others get a space
+            if article.endswith("'"):
+                flipped = f"{article}{base}"
+            else:
+                flipped = f"{article} {base}"
             exact[flipped] = row['id']
             no_accents[strip_accents(flipped)] = row['id']
 
     return exact, no_accents, contains
 
 
+def normalize_apostrophes(s):
+    """Normalize curly quotes to ASCII apostrophe."""
+    return s.replace('\u2019', "'").replace('\u2018', "'").replace('\u00b4', "'")
+
+
 def match_locality(municipality, exact, no_accents, contains):
     """Try progressively fuzzier matching strategies."""
-    key = municipality.lower()
+    key = normalize_apostrophes(municipality.lower())
 
     # 1. Exact match
     if key in exact:
@@ -117,7 +151,18 @@ def match_locality(municipality, exact, no_accents, contains):
         if name.startswith(key) or strip_accents(name).startswith(key_na):
             return lid
 
-    # 4. Strip leading "Vila de/d'" -> base name
+    # 4. Strip leading article "l'" -> base name
+    # e.g., "l'Ampolla" -> "Ampolla" matches "Ampolla, L'"
+    m = re.match(r"^(?:l'|el\s+|la\s+|les\s+|los\s+|las\s+)", key, re.IGNORECASE)
+    if m:
+        base = key[m.end():]
+        if base in exact:
+            return exact[base]
+        base_na = strip_accents(base)
+        if base_na in no_accents:
+            return no_accents[base_na]
+
+    # 5. Strip leading "Vila de/d'" -> base name
     # e.g., "Vila d'Agullent" -> "Agullent"
     m = re.match(r"^(?:vila|ville)\s+d[e']?\s*", key, re.IGNORECASE)
     if m:
@@ -150,6 +195,7 @@ def main():
         JOIN contracts_tags t USING (source, source_id, lot_number)
         WHERE c.country = 'ES'
           AND c.is_concession = TRUE
+          AND c.contract_nature = 'services'
           AND t.tag = 'water'
           AND (
             lower(c.contract_title) LIKE '%%abastecimiento%%agua%%'
@@ -158,6 +204,11 @@ def main():
             OR lower(c.contract_title) LIKE '%%depuraci%%'
             OR lower(c.contract_title) LIKE '%%saneamiento%%'
             OR lower(c.contract_title) LIKE '%%ciclo integral%%'
+            OR lower(c.contract_title) LIKE '%%cicle integral%%'
+            OR lower(c.contract_title) LIKE '%%abastament%%aigua%%'
+            OR lower(c.contract_title) LIKE '%%aigua potable%%'
+            OR lower(c.contract_title) LIKE '%%clavegueram%%'
+            OR lower(c.contract_title) LIKE '%%sanejament%%'
           )
           AND status IN ('awarded', 'formalized')
         ORDER BY c.date_awarded DESC NULLS LAST
@@ -199,9 +250,9 @@ def main():
         # Compute start_date and end_date
         start_date = c['date_contract_start'] or c['date_awarded']
         end_date = None
-        if start_date and c['contract_duration']:
+        duration_months = parse_duration_months(c['contract_duration'])
+        if start_date and duration_months:
             try:
-                duration_months = int(float(c['contract_duration']))
                 if isinstance(start_date, str):
                     start_dt = date.fromisoformat(start_date)
                 else:
