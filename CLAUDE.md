@@ -154,12 +154,14 @@ WHERE code LIKE '904%';
 
 2. **JV detection**: Company names with `-` separators indicate joint ventures (UTEs). Ownership percentage in `companies_groups_memberships` is split accordingly (50% for 2-party, 33.33% for 3-party, etc.).
 
-3. **Deduplication**: The `contracts` table stores only the latest state of each tender-lot. When syncing, use `MERGE`/upsert on the `(source, source_id, lot_number)` primary key.
+3. **Incremental only**: All sync scripts must use upserts (`ON CONFLICT DO UPDATE` / `MERGE`). Never truncate, delete from, or drop production tables. Old data can be updated but never wiped. The database must never be emptied and rebuilt from scratch.
 
-4. **Character encoding**: Some company names from ES_PLACE have corrupted characters. Search with patterns to catch these.
+4. **Deduplication**: The `contracts` table stores only the latest state of each tender-lot. When syncing, use `MERGE`/upsert on the `(source, source_id, lot_number)` primary key.
 
-5. **Espina Obras Hidraulicas** is NOT part of the "Espina y Delfin" group.
+5. **Character encoding**: Some company names from ES_PLACE have corrupted characters. Search with patterns to catch these.
 
-6. **SIMETRIA** was renamed from CICLAGUA. BECSA companies are part of this group.
+6. **Espina Obras Hidraulicas** is NOT part of the "Espina y Delfin" group.
 
-7. **Partial ownership**: "Aguas Municipalizadas de Alicante" is 49% VEOLIA (minority stake).
+7. **SIMETRIA** was renamed from CICLAGUA. BECSA companies are part of this group.
+
+8. **Partial ownership**: "Aguas Municipalizadas de Alicante" is 49% VEOLIA (minority stake).

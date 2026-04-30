@@ -7,8 +7,9 @@ detects which asset types are covered from the contract title, and
 upserts into assets_operators.
 
 Usage:
-    python3 source/es_concessions_enrich.py          # dry run
-    python3 source/es_concessions_enrich.py --apply  # apply changes
+    python3 source/es_concessions_enrich.py                              # dry run, all concessions
+    python3 source/es_concessions_enrich.py --apply                      # apply all
+    python3 source/es_concessions_enrich.py --from 2026-03-01 --apply    # only recent updates
 """
 
 import argparse
@@ -179,6 +180,8 @@ def match_locality(municipality, exact, no_accents, contains):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--apply', action='store_true', help='Apply changes (default is dry run)')
+    parser.add_argument('--from', dest='date_from', help='Only process contracts updated on or after this date (YYYY-MM-DD)')
+    parser.add_argument('--to', dest='date_to', help='Only process contracts updated on or before this date (YYYY-MM-DD)')
     args = parser.parse_args()
 
     conn = psycopg2.connect(**PG_CONFIG)
@@ -186,7 +189,7 @@ def main():
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Fetch Spanish water concessions
-    cur.execute("""
+    query = """
         SELECT c.source, c.source_id, c.lot_number, c.contract_title,
                c.contracting_authority, c.awardee, c.date_awarded,
                c.date_contract_start, c.contract_duration, c.source_url,
@@ -211,8 +214,16 @@ def main():
             OR lower(c.contract_title) LIKE '%%sanejament%%'
           )
           AND status IN ('awarded', 'formalized')
-        ORDER BY c.date_awarded DESC NULLS LAST
-    """)
+    """
+    params = []
+    if args.date_from:
+        query += "          AND c.date_updated >= %s\n"
+        params.append(args.date_from)
+    if args.date_to:
+        query += "          AND c.date_updated <= %s\n"
+        params.append(args.date_to)
+    query += "        ORDER BY c.date_awarded DESC NULLS LAST"
+    cur.execute(query, params)
     concessions = cur.fetchall()
     print(f"Found {len(concessions)} concessions to process")
 
